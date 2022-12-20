@@ -1,32 +1,89 @@
-const conversationController = require('./conversations.controllers')
+const conversationControllers = require('./conversations.controllers')
 
 const getAllConversations = (req, res) => {
-    conversationController.findAllConversations()
-        .then((data) => {
-            res.status(200).json(data)
-        })
-        .catch((err) => {
-            res.status(400).json({message: err.message})
-        })
+  conversationControllers.findAllConversations()
+    .then(data => {
+      res.status(200).json(data)
+    })
+    .catch(err => {
+      res.status(400).json({ message: err.message })
+    })
 }
 
-const postConversation = (req ,res) => {
-    const {title, imgUrl, participantId} = req.body
-    const ownerId = req.user.id 
-    conversationController.createConversation({title, imgUrl, participantId, ownerId})
-        .then(data => {
-            res.status(201).json(data)
-        })
-        .catch(err => {
-            res.status(400).json({message: err.message, fields: {
-                title: 'string',
-                imgUrl: 'string',
-                participantId: 'UUID'
-            }})
-        })
+const postConversations = (req, res) => {
+  const { title, imageUrl, participantId } = req.body
+  const ownerId = req.user.id
+  conversationControllers.createConversation({ title, imageUrl, participantId, ownerId })
+    .then(data => {
+      //? Validacion para que no puedas crear una conversacion contigo mismo
+      if (participantId !== ownerId) {
+        res.status(201).json(data)
+      } else {
+        res.status(404).json({ message: 'The conversation requires at least 2 participants' })
+      }
+    })
+    .catch(err => {
+      res.status(400).json({
+        message: err.message, fields: {
+          title: 'string',
+          imageUrl: 'https://myweb.com/image/myimage.png',
+          participantId: 'UUID'
+        }
+      })
+    })
+}
+
+
+const getConversationsById = (req, res) => {
+  const id = req.params.conversation_id
+  conversationControllers.findConversationsById(id)
+    .then(data => {
+      if (data) {
+        res.status(200).json(data)
+      } else {
+        res.status(404).json({ message: 'Inalid ID' })
+      }
+    })
+    .catch(err => {
+      res.status(400).json({ message: err.message })
+    })
+}
+
+const patchConversations = (req, res) => {
+  const id = req.params.conversation_id
+  const { title, imageUrl } = req.body
+  conversationControllers.updateConversations(id, { title, imageUrl })
+    .then(data => {
+      if (data) {
+        res.status(200).json({ message: `Conversation with id ${id} update succesfully!` })
+      } else {
+        res.status(404).json({ message: 'Inalid ID' })
+      }
+    })
+    .catch(err => {
+      res.status(400).json({ message: err.messages })
+    })
+}
+
+const deleteConversations = (req, res) => {
+  const id = req.params.conversation_id
+  conversationControllers.deleteConversations(id)
+    .then(data => {
+      if (data) {
+        res.status(204).json()
+      } else {
+        res.status(404).json({ message: 'Inalid ID' })
+      }
+    })
+    .catch(err => {
+      res.status(400).json({ message: err.messages })
+    })
 }
 
 module.exports = {
-    getAllConversations,
-    postConversation
+  getAllConversations,
+  getConversationsById,
+  postConversations,
+  patchConversations,
+  deleteConversations
 }

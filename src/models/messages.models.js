@@ -32,4 +32,3 @@ const Messages = db.define('messages', {
 })
 
 module.exports = Messages
-
